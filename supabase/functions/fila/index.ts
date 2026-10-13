@@ -25,8 +25,15 @@ const DURACAO_PADRAO_MIN = 10; // usado até termos atendimentos finalizados
 const AVISAR_ATE_POSICAO = 2; // "prepare-se" quando restar 1 pessoa na frente
 const ATIVOS = ["aguardando", "chamado", "atendendo"];
 
+// Limites contra abuso (cadastros em massa disparariam WhatsApp e arriscam o número na Meta)
+const LIMITE_CADASTROS_IP = 15; // por IP a cada 10 min (Wi-Fi da feira é compartilhado)
+const LIMITE_CADASTROS_TOTAL = 150; // no sistema todo a cada 10 min
+const LIMITE_PIN_ERRADO_IP = 8; // tentativas erradas por IP a cada 15 min
+const LIMITE_PIN_ERRADO_TOTAL = 40; // tentativas erradas no total a cada 15 min
+
 const cors = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": SITE ? new URL(SITE).origin : "*",
+  "Vary": "Origin",
   "Access-Control-Allow-Headers": "content-type, x-painel-pin",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
@@ -192,9 +199,37 @@ async function avisarProximos() {
   }
 }
 
+// ---------- limites de uso ----------
+
+async function contar(chave: string, janelaMin: number): Promise<number> {
+  const desde = new Date(Date.now() - janelaMin * 60000).toISOString();
+  const { count, error } = await sb
+    .from("tentativas")
+    .select("*", { count: "exact", head: true })
+    .eq("chave", chave)
+    .gte("criado_em", desde);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+async function registrar(...chaves: string[]) {
+  await sb.from("tentativas").insert(chaves.map((chave) => ({ chave })));
+  // limpeza ocasional do que tem mais de 1 dia
+  if (Math.random() < 0.05) {
+    await sb.from("tentativas").delete().lt("criado_em", new Date(Date.now() - 86400000).toISOString());
+  }
+}
+
+const muitas = () => json({ erro: "Muitas tentativas. Aguarde alguns minutos e tente de novo." }, 429);
+
 // ---------- ações públicas ----------
 
-async function entrar(b: Record<string, unknown>) {
+async function entrar(b: Record<string, unknown>, ip: string) {
+  if (
+    (await contar(`cad:${ip}`, 10)) >= LIMITE_CADASTROS_IP ||
+    (await contar("cad:total", 10)) >= LIMITE_CADASTROS_TOTAL
+  ) return muitas();
+
   const nome = limpar(b.nome, 80);
   const telefone = normalizarTelefone(String(b.telefone ?? ""));
   if (!nome) return json({ erro: "Informe seu nome." }, 400);
@@ -224,6 +259,7 @@ async function entrar(b: Record<string, unknown>) {
   if (error) throw error;
 
   const p = data as Pessoa;
+  await registrar(`cad:${ip}`, "cad:total");
   const { posicao, espera_min } = await posicaoDe(p.id);
   if (posicao !== null && posicao <= AVISAR_ATE_POSICAO) {
     await atualizar(p.id, { avisado_proximo: true });
@@ -376,7 +412,7 @@ async function exportar() {
   return json({ linhas: data });
 }
 
-const publicas: Record<string, (b: Record<string, unknown>) => Promise<Response>> = { entrar, status };
+const publicas: Record<string, (b: Record<string, unknown>, ip: string) => Promise<Response>> = { entrar, status };
 const painel: Record<string, (b: Record<string, unknown>) => Promise<Response>> = {
   lista, chamar, rechamar, chegou, finalizar, pular, remover, voltar, exportar,
   login: async () => json({ ok: true }),
@@ -388,9 +424,17 @@ Deno.serve(async (req) => {
   try {
     const b = await req.json().catch(() => ({}));
     const acao = String(b.acao ?? "");
-    if (publicas[acao]) return await publicas[acao](b);
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "sem-ip";
+    if (publicas[acao]) return await publicas[acao](b, ip);
     if (painel[acao]) {
-      if (!PIN || req.headers.get("x-painel-pin") !== PIN) return json({ erro: "PIN inválido." }, 401);
+      if (
+        (await contar(`pin:${ip}`, 15)) >= LIMITE_PIN_ERRADO_IP ||
+        (await contar("pin:total", 15)) >= LIMITE_PIN_ERRADO_TOTAL
+      ) return muitas();
+      if (!PIN || req.headers.get("x-painel-pin") !== PIN) {
+        await registrar(`pin:${ip}`, "pin:total");
+        return json({ erro: "PIN inválido." }, 401);
+      }
       return await painel[acao](b);
     }
     return json({ erro: "Ação desconhecida." }, 400);

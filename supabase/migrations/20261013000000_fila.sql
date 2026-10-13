@@ -29,3 +29,13 @@ alter table public.fila enable row level security;
 
 -- Acesso só para a role interna da edge function (o projeto não expõe tabelas automaticamente).
 grant select, insert, update, delete on table public.fila to service_role;
+
+-- Contador de tentativas (limite de cadastros e de PIN errado)
+create table if not exists public.tentativas (
+  id        bigint generated always as identity primary key,
+  chave     text not null,
+  criado_em timestamptz not null default now()
+);
+create index if not exists tentativas_chave_data on public.tentativas (chave, criado_em);
+alter table public.tentativas enable row level security;
+grant select, insert, delete on table public.tentativas to service_role;

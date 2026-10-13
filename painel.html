@@ -295,7 +295,8 @@ $("exportar").addEventListener("click", async () => {
   try {
     const { linhas } = await api("exportar", {}, PIN);
     const cols = ["dia", "nome", "telefone", "cargo", "email", "escola", "instagram", "status", "pulos", "entrou_em", "chamado_em", "chegou_em", "finalizado_em", "atendente"];
-    const cel = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    // Prefixa ' em valores que o Excel interpretaria como fórmula
+    const cel = (v) => { let t = String(v ?? ""); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return `"${t.replace(/"/g, '""')}"`; };
     const dt = (v) => (v ? new Date(v).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "");
     const csv = [cols.join(";"), ...linhas.map((l) => cols.map((c) => cel(c.endsWith("_em") ? dt(l[c]) : l[c])).join(";"))].join("\n");
     const a = document.createElement("a");
