@@ -45,6 +45,7 @@
   .wavi-mini { width: 108px; flex: none; filter: drop-shadow(0 0 18px color-mix(in srgb, #16EA9E 35%, transparent)); }
   .wavi { width: 170px; display: block; margin: -6px auto 6px; filter: drop-shadow(0 0 24px color-mix(in srgb, #16EA9E 45%, transparent)); }
   .numero, .vez h2 { background: var(--gradiente); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .isca { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   .rodape { text-align: center; font-size: 12px; color: #5f8c99; margin-top: 30px; }
 </style>
 </head>
@@ -79,6 +80,8 @@
       <div class="campo"><label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@escola.com.br"></div>
       <div class="campo"><label for="escola">Nome da escola</label><input id="escola" name="escola" autocomplete="organization" placeholder="Ex.: Acqua Vida Natação"></div>
       <div class="campo"><label for="instagram">Instagram da escola</label><input id="instagram" name="instagram" autocapitalize="off" autocorrect="off" placeholder="@suaescola"></div>
+      <!-- armadilha anti-robô: invisível para pessoas -->
+      <div class="isca" aria-hidden="true"><label for="site">Site</label><input id="site" name="site" tabindex="-1" autocomplete="off"></div>
       <label class="consentimento"><input type="checkbox" id="aceite" checked> Aceito receber mensagens da WasFit no WhatsApp sobre a fila e sobre a WasFit.</label>
       <p class="erro" id="erro"></p>
       <button id="enviar" type="submit">Entrar na fila</button>
@@ -132,6 +135,7 @@ const CHAVE = "fila-wasfit-id";
 const ler = () => { try { return localStorage.getItem(CHAVE); } catch { return null; } };
 const gravar = (v) => { try { v ? localStorage.setItem(CHAVE, v) : localStorage.removeItem(CHAVE); } catch {} };
 
+const abriuEm = Date.now();
 let meuId = new URLSearchParams(location.search).get("t") || ler();
 let timer, relogio;
 
@@ -156,7 +160,7 @@ $("form").addEventListener("submit", async (e) => {
   if (!$("aceite").checked) return ($("erro").textContent = "Precisamos do seu aceite para te chamar no WhatsApp.");
   $("enviar").disabled = true; $("enviar").textContent = "Entrando…";
   try {
-    const r = await api("entrar", dados);
+    const r = await api("entrar", { ...dados, tempo_ms: Date.now() - abriuEm });
     meuId = r.id; gravar(meuId);
     history.replaceState(null, "", "?t=" + meuId);
     await atualizar();

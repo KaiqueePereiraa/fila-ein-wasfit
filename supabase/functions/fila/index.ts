@@ -26,8 +26,8 @@ const AVISAR_ATE_POSICAO = 2; // "prepare-se" quando restar 1 pessoa na frente
 const ATIVOS = ["aguardando", "chamado", "atendendo"];
 
 // Limites contra abuso (cadastros em massa disparariam WhatsApp e arriscam o número na Meta)
-const LIMITE_CADASTROS_IP = 15; // por IP a cada 10 min (Wi-Fi da feira é compartilhado)
-const LIMITE_CADASTROS_TOTAL = 150; // no sistema todo a cada 10 min
+const LIMITE_CADASTROS_IP = 100; // por IP a cada 10 min: folgado, o Wi-Fi da feira é compartilhado
+const TEMPO_MINIMO_MS = 4000; // ninguém preenche o formulário em menos de 4 s; robôs sim
 const LIMITE_PIN_ERRADO_IP = 8; // tentativas erradas por IP a cada 15 min
 const LIMITE_PIN_ERRADO_TOTAL = 40; // tentativas erradas no total a cada 15 min
 
@@ -225,10 +225,14 @@ const muitas = () => json({ erro: "Muitas tentativas. Aguarde alguns minutos e t
 // ---------- ações públicas ----------
 
 async function entrar(b: Record<string, unknown>, ip: string) {
-  if (
-    (await contar(`cad:${ip}`, 10)) >= LIMITE_CADASTROS_IP ||
-    (await contar("cad:total", 10)) >= LIMITE_CADASTROS_TOTAL
-  ) return muitas();
+  // Armadilhas anti-robô: campo invisível preenchido ou formulário enviado rápido demais.
+  // Responde como se tivesse dado certo, para o robô não perceber, mas não grava nem envia nada.
+  const tempo = Number(b.tempo_ms ?? 0);
+  if (limpar(b.site, 200) || !(tempo >= TEMPO_MINIMO_MS)) {
+    console.warn("cadastro bloqueado (anti-robô)", ip);
+    return json({ id: crypto.randomUUID() });
+  }
+  if ((await contar(`cad:${ip}`, 10)) >= LIMITE_CADASTROS_IP) return muitas();
 
   const nome = limpar(b.nome, 80);
   const telefone = normalizarTelefone(String(b.telefone ?? ""));
@@ -259,7 +263,7 @@ async function entrar(b: Record<string, unknown>, ip: string) {
   if (error) throw error;
 
   const p = data as Pessoa;
-  await registrar(`cad:${ip}`, "cad:total");
+  await registrar(`cad:${ip}`);
   const { posicao, espera_min } = await posicaoDe(p.id);
   if (posicao !== null && posicao <= AVISAR_ATE_POSICAO) {
     await atualizar(p.id, { avisado_proximo: true });
