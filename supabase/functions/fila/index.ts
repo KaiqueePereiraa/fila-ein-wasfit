@@ -31,8 +31,10 @@ const TEMPO_MINIMO_MS = 4000; // ninguém preenche o formulário em menos de 4 s
 const LIMITE_PIN_ERRADO_IP = 8; // tentativas erradas por IP a cada 15 min
 const LIMITE_PIN_ERRADO_TOTAL = 40; // tentativas erradas no total a cada 15 min
 
-const cors = {
-  "Access-Control-Allow-Origin": SITE ? new URL(SITE).origin : "*",
+// Só estes sites podem chamar a função pelo navegador
+const ORIGENS = ["https://wasfit.com.br", "https://kaiqueepereiraa.github.io"];
+const cors: Record<string, string> = {
+  "Access-Control-Allow-Origin": ORIGENS[0],
   "Vary": "Origin",
   "Access-Control-Allow-Headers": "content-type, x-painel-pin",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -423,6 +425,8 @@ const painel: Record<string, (b: Record<string, unknown>) => Promise<Response>> 
 };
 
 Deno.serve(async (req) => {
+  const origem = req.headers.get("origin") ?? "";
+  cors["Access-Control-Allow-Origin"] = ORIGENS.includes(origem) ? origem : ORIGENS[0];
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ erro: "Use POST." }, 405);
   try {

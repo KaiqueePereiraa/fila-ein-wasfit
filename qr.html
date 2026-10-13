@@ -2,6 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'none'; object-src 'none'; form-action 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://zgsmhzgvlcfwhbhhjigw.supabase.co; script-src 'self' https://cdnjs.cloudflare.com; upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR da Fila · WasFit</title>
 <meta name="robots" content="noindex">
@@ -42,13 +43,9 @@
       </div>
       <div class="url" id="url"></div>
     </div>
-    <div style="text-align:center"><button class="imprimir" onclick="print()">Imprimir cartaz</button></div>
+    <div style="text-align:center"><button class="imprimir" id="imprimir">Imprimir cartaz</button></div>
   </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script>
-  const alvo = new URL("./", location.href).href;
-  document.getElementById("url").textContent = alvo.replace(/^https?:\/\//, "");
-  new QRCode(document.getElementById("qr"), { text: alvo, width: 640, height: 640, colorDark: "#01040a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
-</script>
+<script src="js/qr.js"></script>
 </body>
 </html>
