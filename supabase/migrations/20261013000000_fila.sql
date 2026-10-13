@@ -26,3 +26,6 @@ create index if not exists fila_telefone on public.fila (telefone);
 -- Sem policies: ninguém acessa direto pelo navegador.
 -- Todo acesso passa pela edge function "fila" (service role).
 alter table public.fila enable row level security;
+
+-- Acesso só para a role interna da edge function (o projeto não expõe tabelas automaticamente).
+grant select, insert, update, delete on table public.fila to service_role;
