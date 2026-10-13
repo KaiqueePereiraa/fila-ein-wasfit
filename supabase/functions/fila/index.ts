@@ -228,7 +228,7 @@ async function entrar(b: Record<string, unknown>, ip: string) {
   // Armadilhas anti-robô: campo invisível preenchido ou formulário enviado rápido demais.
   // Responde como se tivesse dado certo, para o robô não perceber, mas não grava nem envia nada.
   const tempo = Number(b.tempo_ms ?? 0);
-  if (limpar(b.site, 200) || !(tempo >= TEMPO_MINIMO_MS)) {
+  if (limpar(b.cx_ref, 200) || !(tempo >= TEMPO_MINIMO_MS)) {
     console.warn("cadastro bloqueado (anti-robô)", ip);
     return json({ id: crypto.randomUUID() });
   }
