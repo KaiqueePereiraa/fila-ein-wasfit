@@ -1,5 +1,5 @@
 // Endereço da edge function no Supabase (preenchido no deploy).
-window.FILA_API = "https://SEU-PROJETO.supabase.co/functions/v1/fila";
+window.FILA_API = "https://zgsmhzgvlcfwhbhhjigw.supabase.co/functions/v1/fila";
 
 window.api = async function (acao, dados = {}, pin) {
   const headers = { "Content-Type": "application/json" };
