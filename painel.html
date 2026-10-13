@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel da Fila · WasFit</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#04202d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  main { max-width: 1200px; margin: 0 auto; padding: 16px 16px 60px; }
+  .topo { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .topo .acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .topo select { width: auto; padding: 9px 12px; font-size: 14px; }
+  .topo button { padding: 9px 14px; font-size: 14px; }
+
+  .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .stat { background: var(--cartao); border: 1px solid var(--borda); border-radius: 14px; padding: 12px 14px; }
+  .stat b { display: block; font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 28px; line-height: 1.1; }
+  .stat span { font-size: 12px; color: var(--suave); }
+
+  #chamar-proximo { width: 100%; font-size: 22px; padding: 20px; margin-bottom: 18px; font-family: "Archivo Black", sans-serif; font-weight: 400; text-transform: uppercase; letter-spacing: .02em; }
+
+  .colunas { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; align-items: start; }
+  .bloco h2 { font-size: 13px; margin: 4px 0 10px; color: var(--suave); display: flex; gap: 8px; align-items: center; }
+  .bloco h2 .n { background: var(--borda); color: var(--texto); border-radius: 999px; padding: 1px 9px; font-size: 12px; }
+  .bloco + .bloco { margin-top: 18px; }
+  .vazio { color: #5f8c99; font-size: 14px; padding: 14px; border: 1.5px dashed var(--borda); border-radius: 14px; text-align: center; }
+
+  .pessoa { background: var(--cartao); border: 1.5px solid var(--borda); border-radius: 14px; padding: 14px; margin-bottom: 10px; }
+  .pessoa.chamado { border-color: var(--amarelo); }
+  .pessoa.atrasado { border-color: var(--vermelho); background: color-mix(in srgb, var(--vermelho) 12%, var(--cartao)); }
+  .pessoa.atendendo { border-color: var(--azul); }
+  .linha1 { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+  .nome { font-weight: 800; font-size: 18px; }
+  .tempo { font-family: "JetBrains Mono", monospace; font-size: 18px; white-space: nowrap; }
+  .atrasado .tempo { color: var(--vermelho); }
+  .det { font-size: 13px; color: var(--suave); margin-top: 3px; overflow-wrap: anywhere; }
+  .det a { color: var(--azul); text-decoration: none; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 6px; background: color-mix(in srgb, var(--amarelo) 20%, transparent); color: var(--amarelo); margin-left: 6px; vertical-align: 2px; }
+  .botoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .botoes button { padding: 11px 14px; font-size: 15px; flex: 1 1 auto; }
+
+  .fila-item { display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; background: var(--cartao); border: 1px solid var(--borda); border-radius: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .pos { font-family: "Archivo Black", sans-serif; font-size: 20px; color: var(--verde); text-align: center; }
+  .fila-item .nome { font-size: 16px; }
+  .fila-item .mini { display: flex; gap: 6px; }
+  .fila-item .mini button { padding: 8px 10px; font-size: 13px; }
+
+  details { margin-top: 18px; }
+  summary { cursor: pointer; color: var(--suave); font-size: 14px; padding: 8px 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--borda); }
+  th { color: var(--suave); font-weight: 600; }
+  .tabela { overflow-x: auto; }
+
+  #login { max-width: 360px; margin: 18vh auto 0; }
+  #login h1 { font-size: 30px; margin: 18px 0 16px; }
+  #login button { width: 100%; }
+  .conexao { font-size: 12px; color: var(--suave); }
+  .conexao.ruim { color: var(--vermelho); }
+  #aviso { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--texto); color: var(--fundo); padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 14px; max-width: calc(100% - 32px); box-shadow: 0 10px 30px #0008; }
+
+  @media (max-width: 860px) {
+    .colunas { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stats .stat:nth-child(n+4) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<section id="login" class="oculto">
+  <div class="cartao">
+    <span class="etiqueta">Painel do stand</span>
+    <h1>Fila <em>WasFit</em></h1>
+    <form id="form-login">
+      <div class="campo"><label for="pin">PIN do painel</label><input id="pin" type="password" inputmode="numeric" autocomplete="current-password"></div>
+      <div class="campo"><label for="atendente-login">Quem é você?</label><input id="atendente-login" placeholder="Seu nome"></div>
+      <p class="erro" id="erro-login"></p>
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+</section>
+
+<main id="app" class="oculto">
+  <div class="topo">
+    <div class="marca">
+      <svg viewBox="0 0 32 32" fill="none" stroke="#3cf0a5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l6 15 7-13 7 13 6-15"/></svg>
+      Fila do stand <span class="etiqueta" style="margin-left:6px">EIN 2026</span>
+    </div>
+    <div class="acoes">
+      <span class="conexao" id="conexao">conectando…</span>
+      <span class="det" id="eu"></span>
+      <button class="secundario" id="exportar">Exportar CSV</button>
+      <button class="secundario" id="sair">Sair</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="s-aguardando">–</b><span>na fila</span></div>
+    <div class="stat"><b id="s-espera">–</b><span>espera média até ser chamado</span></div>
+    <div class="stat"><b id="s-atendidos">–</b><span>atendidos hoje</span></div>
+    <div class="stat"><b id="s-duracao">–</b><span>duração média do atendimento</span></div>
+    <div class="stat"><b id="s-desist">–</b><span>desistências hoje</span></div>
+  </div>
+
+  <button id="chamar-proximo">Chamar próximo</button>
+
+  <div class="colunas">
+    <div>
+      <div class="bloco">
+        <h2 class="mono">Chamados · aguardando chegar <span class="n" id="n-chamados">0</span></h2>
+        <div id="chamados"></div>
+      </div>
+      <div class="bloco">
+        <h2 class="mono">Em atendimento <span class="n" id="n-atendendo">0</span></h2>
+        <div id="atendendo"></div>
+      </div>
+    </div>
+    <div class="bloco">
+      <h2 class="mono">Fila <span class="n" id="n-fila">0</span></h2>
+      <div id="fila"></div>
+    </div>
+  </div>
+
+  <details>
+    <summary>Encerrados hoje (<span id="n-fim">0</span>)</summary>
+    <div class="tabela"><table>
+      <thead><tr><th>Nome</th><th>Escola</th><th>Status</th><th>Esperou</th><th>Atendimento</th><th>Atendente</th><th></th></tr></thead>
+      <tbody id="encerrados"></tbody>
+    </table></div>
+  </details>
+</main>
+
+<div id="aviso" class="oculto"></div>
+
+<script src="config.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const store = {
+  get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
+  set: (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
+};
+let PIN = store.get("fila-pin");
+let ATENDENTE = store.get("fila-atendente") || "";
+let dados = null, offset = 0, timer;
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const agora = () => Date.now() + offset;
+const mmss = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
+const min = (a, b) => (a && b ? Math.round((Date.parse(b) - Date.parse(a)) / 60000) + " min" : "–");
+const telFmt = (t) => { const d = t.replace(/^55/, ""); return d.length === 11 ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}` : t; };
+
+function aviso(txt) {
+  $("aviso").textContent = txt; $("aviso").classList.remove("oculto");
+  clearTimeout(aviso.t); aviso.t = setTimeout(() => $("aviso").classList.add("oculto"), 3500);
+}
+
+function detalhes(p) {
+  const partes = [p.cargo, p.escola].filter(Boolean).map(esc);
+  if (p.instagram) partes.push(`<a href="https://instagram.com/${esc(p.instagram.slice(1))}" target="_blank" rel="noopener">${esc(p.instagram)}</a>`);
+  partes.push(`<a href="https://wa.me/${esc(p.telefone)}" target="_blank" rel="noopener">${telFmt(p.telefone)}</a>`);
+  return partes.join(" · ");
+}
+
+function render() {
+  if (!dados) return;
+  const tol = dados.tolerancia_min * 60000;
+  const ativos = dados.ativos;
+  const chamados = ativos.filter((p) => p.status === "chamado").sort((a, b) => Date.parse(a.chamado_em) - Date.parse(b.chamado_em));
+  const atendendo = ativos.filter((p) => p.status === "atendendo");
+  const fila = ativos.filter((p) => p.status === "aguardando");
+
+  $("n-chamados").textContent = chamados.length;
+  $("n-atendendo").textContent = atendendo.length;
+  $("n-fila").textContent = fila.length;
+
+  $("chamados").innerHTML = chamados.length ? chamados.map((p) => {
+    const passou = agora() - Date.parse(p.chamado_em);
+    const atrasado = passou > tol;
+    return `<div class="pessoa chamado ${atrasado ? "atrasado" : ""}">
+      <div class="linha1"><div class="nome">${esc(p.nome)}${p.pulos ? '<span class="tag">2ª chamada</span>' : ""}</div>
+        <div class="tempo" data-desde="${p.chamado_em}" data-limite="${tol}">${atrasado ? "+" + mmss(passou - tol) : mmss(tol - passou)}</div></div>
+      <div class="det">${detalhes(p)}${p.atendente ? " · chamado por " + esc(p.atendente) : ""}</div>
+      <div class="botoes">
+        <button data-acao="chegou" data-id="${p.id}">✓ Chegou</button>
+        <button class="secundario" data-acao="rechamar" data-id="${p.id}">Rechamar</button>
+        <button class="perigo" data-acao="pular" data-id="${p.id}" data-pulos="${p.pulos}">${p.pulos ? "Não veio · encerrar" : "Não veio · pular"}</button>
+      </div></div>`;
+  }).join("") : '<div class="vazio">Ninguém chamado agora</div>';
+
+  $("atendendo").innerHTML = atendendo.length ? atendendo.map((p) => `
+    <div class="pessoa atendendo">
+      <div class="linha1"><div class="nome">${esc(p.nome)}</div><div class="tempo" data-desde="${p.chegou_em}">${mmss(agora() - Date.parse(p.chegou_em))}</div></div>
+      <div class="det">${detalhes(p)}${p.atendente ? " · com " + esc(p.atendente) : ""}</div>
+      <div class="botoes"><button class="azul" data-acao="finalizar" data-id="${p.id}">Finalizar atendimento</button></div>
+    </div>`).join("") : '<div class="vazio">Nenhum atendimento em andamento</div>';
+
+  $("fila").innerHTML = fila.length ? fila.map((p, i) => `
+    <div class="fila-item">
+      <div class="pos">${i + 1}</div>
+      <div><div class="nome">${esc(p.nome)}${p.pulos ? '<span class="tag">pulado</span>' : ""}</div>
+        <div class="det">${detalhes(p)} · na fila há <span data-desde="${p.entrou_em}" data-fmt="min">${Math.floor((agora() - Date.parse(p.entrou_em)) / 60000)} min</span></div></div>
+      <div class="mini">
+        <button class="secundario" data-acao="chamar" data-id="${p.id}" title="Chamar esta pessoa agora">Chamar</button>
+        <button class="perigo" data-acao="remover" data-id="${p.id}" title="Tirar da fila">✕</button>
+      </div>
+    </div>`).join("") : '<div class="vazio">Fila vazia 🎉</div>';
+
+  $("chamar-proximo").disabled = !fila.length;
+  $("chamar-proximo").textContent = fila.length ? `Chamar próximo · ${fila[0].nome.split(" ")[0]}` : "Fila vazia";
+
+  const s = dados.stats;
+  $("s-aguardando").textContent = s.aguardando;
+  $("s-espera").textContent = s.espera_media_min != null ? s.espera_media_min + " min" : "–";
+  $("s-atendidos").textContent = s.atendidos_hoje;
+  $("s-duracao").textContent = s.duracao_media_min + " min";
+  $("s-desist").textContent = s.desistencias_hoje;
+
+  $("n-fim").textContent = dados.encerrados.length;
+  $("encerrados").innerHTML = dados.encerrados.map((p) => `<tr>
+    <td>${esc(p.nome)}</td><td>${esc(p.escola)}</td>
+    <td>${p.status === "atendido" ? "Atendido" : "Desistiu"}</td>
+    <td>${min(p.entrou_em, p.chamado_em)}</td><td>${min(p.chegou_em, p.finalizado_em)}</td><td>${esc(p.atendente)}</td>
+    <td>${p.status === "desistiu" ? `<button class="secundario" style="padding:6px 10px;font-size:12px" data-acao="voltar" data-id="${p.id}">Voltar p/ fila</button>` : ""}</td>
+  </tr>`).join("");
+}
+
+// Atualiza só os cronômetros a cada segundo, sem redesenhar a lista
+setInterval(() => {
+  document.querySelectorAll("[data-desde]").forEach((el) => {
+    const passou = agora() - Date.parse(el.dataset.desde);
+    if (el.dataset.fmt === "min") return (el.textContent = Math.floor(passou / 60000) + " min");
+    if (el.dataset.limite) {
+      const lim = +el.dataset.limite;
+      el.textContent = passou > lim ? "+" + mmss(passou - lim) : mmss(lim - passou);
+      el.closest(".pessoa").classList.toggle("atrasado", passou > lim);
+    } else el.textContent = mmss(passou);
+  });
+}, 1000);
+
+async function carregar() {
+  clearTimeout(timer);
+  try {
+    const r = await api("lista", {}, PIN);
+    offset = Date.parse(r.agora) - Date.now();
+    dados = r; render();
+    $("conexao").textContent = "● ao vivo"; $("conexao").classList.remove("ruim");
+  } catch (e) {
+    if (e.status === 401) return sair();
+    $("conexao").textContent = "● sem conexão"; $("conexao").classList.add("ruim");
+  }
+  timer = setTimeout(carregar, 4000);
+}
+
+const textos = {
+  chamar: "Chamado! WhatsApp enviado.",
+  rechamar: "Mensagem reenviada.",
+  chegou: "Atendimento iniciado.",
+  finalizar: "Atendimento finalizado.",
+  remover: "Removido da fila.",
+  voltar: "Voltou para o fim da fila.",
+};
+
+async function executar(acao, id, botao) {
+  if (acao === "pular") {
+    const encerra = botao.dataset.pulos !== "0";
+    if (!confirm(encerra ? "Segunda vez que não aparece: encerrar e liberar a vez?" : "Não apareceu? Ela volta para o fim da fila e recebe aviso no WhatsApp.")) return;
+  }
+  if (acao === "remover" && !confirm("Tirar esta pessoa da fila? (não envia mensagem)")) return;
+  if (botao) botao.disabled = true;
+  try {
+    const r = await api(acao, { id, atendente: ATENDENTE }, PIN);
+    if (acao === "pular") aviso(r.resultado === "desistiu" ? "Encerrado. Aviso enviado." : `Voltou para a fila (${r.posicao}º). Aviso enviado.`);
+    else if (acao === "chamar") aviso(r.enviado === false ? `⚠️ ${r.pessoa.nome} chamado, mas o WhatsApp falhou. Use Rechamar.` : `${r.pessoa.nome} chamado! WhatsApp enviado.`);
+    else if (acao === "rechamar" && r.enviado === false) aviso("⚠️ Falha ao reenviar o WhatsApp.");
+    else aviso(textos[acao] || "Feito.");
+  } catch (e) {
+    aviso(e.message);
+  }
+  await carregar();
+}
+
+document.addEventListener("click", (e) => {
+  const b = e.target.closest("button[data-acao]");
+  if (b) executar(b.dataset.acao, b.dataset.id, b);
+});
+$("chamar-proximo").addEventListener("click", (e) => executar("chamar", undefined, e.currentTarget));
+
+$("exportar").addEventListener("click", async () => {
+  try {
+    const { linhas } = await api("exportar", {}, PIN);
+    const cols = ["dia", "nome", "telefone", "cargo", "email", "escola", "instagram", "status", "pulos", "entrou_em", "chamado_em", "chegou_em", "finalizado_em", "atendente"];
+    const cel = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const dt = (v) => (v ? new Date(v).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }) : "");
+    const csv = [cols.join(";"), ...linhas.map((l) => cols.map((c) => cel(c.endsWith("_em") ? dt(l[c]) : l[c])).join(";"))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `leads-ein-2026-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+  } catch (e) { aviso(e.message); }
+});
+
+function sair() {
+  clearTimeout(timer); PIN = null; store.set("fila-pin", null);
+  $("app").classList.add("oculto"); $("login").classList.remove("oculto");
+}
+$("sair").addEventListener("click", sair);
+
+$("form-login").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("erro-login").textContent = "";
+  try {
+    await api("login", {}, $("pin").value);
+    PIN = $("pin").value; store.set("fila-pin", PIN);
+    ATENDENTE = $("atendente-login").value.trim(); store.set("fila-atendente", ATENDENTE);
+    iniciar();
+  } catch (err) { $("erro-login").textContent = err.status === 401 ? "PIN incorreto." : err.message; }
+});
+
+function iniciar() {
+  $("login").classList.add("oculto"); $("app").classList.remove("oculto");
+  $("eu").textContent = ATENDENTE ? "· " + ATENDENTE : "";
+  carregar();
+}
+
+$("atendente-login").value = ATENDENTE;
+PIN ? iniciar() : $("login").classList.remove("oculto");
+</script>
+</body>
+</html>

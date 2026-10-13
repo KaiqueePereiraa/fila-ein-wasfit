@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fila WasFit · EIN 2026</title>
+<meta name="theme-color" content="#04202d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  main { max-width: 480px; margin: 0 auto; padding: 22px 16px 40px; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 28px; }
+  h1 { font-size: clamp(32px, 9vw, 42px); margin: 14px 0 10px; }
+  .intro { color: var(--suave); margin: 0 0 22px; }
+  .consentimento { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--suave); margin: 6px 0 18px; font-weight: 400; }
+  .consentimento input { width: 20px; height: 20px; flex: none; margin-top: 1px; accent-color: var(--verde); }
+  #enviar { width: 100%; font-size: 18px; padding: 17px; }
+
+  .estado { text-align: center; }
+  .numero {
+    font-family: "Archivo Black", sans-serif;
+    font-size: 120px; line-height: 1; color: var(--verde);
+    text-shadow: 0 0 40px color-mix(in srgb, var(--verde) 40%, transparent);
+    margin: 6px 0 2px;
+  }
+  .rotulo { color: var(--suave); }
+  .linhas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 22px 0; }
+  .linhas div { background: var(--fundo); border: 1px solid var(--borda); border-radius: 12px; padding: 12px; }
+  .linhas b { display: block; font-size: 22px; }
+  .linhas span { font-size: 12px; color: var(--suave); }
+  .dica { font-size: 14px; color: var(--suave); }
+
+  .vez { border-color: var(--verde); box-shadow: 0 0 0 4px color-mix(in srgb, var(--verde) 20%, transparent), 0 0 60px color-mix(in srgb, var(--verde) 25%, transparent); animation: pulsa 1.6s ease-in-out infinite; }
+  .vez h2 { font-family: "Archivo Black", sans-serif; font-weight: 400; font-size: 40px; line-height: 1.05; text-transform: uppercase; margin: 6px 0 10px; color: var(--verde); }
+  .relogio { font-family: "JetBrains Mono", monospace; font-size: 36px; margin: 10px 0; }
+  @keyframes pulsa { 50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--verde) 8%, transparent), 0 0 80px color-mix(in srgb, var(--verde) 35%, transparent); } }
+  @media (prefers-reduced-motion: reduce) { .vez { animation: none; } }
+  .rodape { text-align: center; font-size: 12px; color: #5f8c99; margin-top: 30px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="marca">
+      <svg viewBox="0 0 32 32" fill="none" stroke="#3cf0a5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l6 15 7-13 7 13 6-15"/></svg>
+      WasFit
+    </div>
+    <span class="etiqueta">EIN 2026</span>
+  </header>
+
+  <!-- 1. Cadastro -->
+  <section id="tela-cadastro">
+    <h1>Entre na <em>fila</em> do stand</h1>
+    <p class="intro">Deixe seus dados e pode circular pela feira. Avisamos no seu WhatsApp quando for a sua vez.</p>
+    <form id="form" class="cartao" novalidate>
+      <div class="campo"><label for="nome">Seu nome</label><input id="nome" name="nome" autocomplete="name" required placeholder="Ex.: Mariana Lopes"></div>
+      <div class="campo"><label for="telefone">WhatsApp <small>com DDD</small></label><input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" required placeholder="(27) 99999-9999"></div>
+      <div class="campo"><label for="cargo">Cargo</label>
+        <select id="cargo" name="cargo">
+          <option value="">Selecione…</option>
+          <option>Proprietário(a)</option>
+          <option>Sócio(a)</option>
+          <option>Gestor(a) / Gerente</option>
+          <option>Coordenador(a)</option>
+          <option>Professor(a)</option>
+          <option>Recepção / Comercial</option>
+          <option>Outro</option>
+        </select>
+      </div>
+      <div class="campo"><label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@escola.com.br"></div>
+      <div class="campo"><label for="escola">Nome da escola</label><input id="escola" name="escola" autocomplete="organization" placeholder="Ex.: Acqua Vida Natação"></div>
+      <div class="campo"><label for="instagram">Instagram da escola</label><input id="instagram" name="instagram" autocapitalize="off" autocorrect="off" placeholder="@suaescola"></div>
+      <label class="consentimento"><input type="checkbox" id="aceite" checked> Aceito receber mensagens da WasFit no WhatsApp sobre a fila e sobre a WasFit.</label>
+      <p class="erro" id="erro"></p>
+      <button id="enviar" type="submit">Entrar na fila</button>
+    </form>
+  </section>
+
+  <!-- 2. Aguardando -->
+  <section id="tela-fila" class="oculto">
+    <div class="cartao estado">
+      <span class="etiqueta">Você está na fila</span>
+      <p class="rotulo" style="margin-top:18px" id="ola"></p>
+      <div class="numero" id="posicao">–</div>
+      <div class="rotulo">sua posição</div>
+      <div class="linhas">
+        <div><b id="espera">–</b><span>espera estimada</span></div>
+        <div><b>WhatsApp</b><span>é por lá que te chamamos</span></div>
+      </div>
+      <p class="dica">Pode circular pela feira. Esta página atualiza sozinha.</p>
+    </div>
+  </section>
+
+  <!-- 3. Sua vez -->
+  <section id="tela-vez" class="oculto">
+    <div class="cartao estado vez">
+      <span class="etiqueta">Agora</span>
+      <h2>Chegou a sua vez!</h2>
+      <p>Venha para o stand da WasFit. Estamos te esperando.</p>
+      <div class="relogio" id="relogio">10:00</div>
+      <p class="dica" id="relogio-txt">tempo para chegar ao stand</p>
+    </div>
+  </section>
+
+  <!-- 4. Encerrado -->
+  <section id="tela-fim" class="oculto">
+    <div class="cartao estado">
+      <span class="etiqueta" id="fim-etq">Obrigado</span>
+      <h1 style="font-size:34px;margin:18px 0 10px" id="fim-titulo">Bom te ver por aqui!</h1>
+      <p class="dica" id="fim-txt">Qualquer dúvida, fale com a gente pelo WhatsApp.</p>
+      <button class="secundario" id="nova" style="margin-top:12px">Fazer novo cadastro</button>
+    </div>
+  </section>
+
+  <p class="rodape">wasfit.com.br · a IA de WhatsApp da sua escola de natação</p>
+</main>
+
+<script src="config.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const CHAVE = "fila-wasfit-id";
+const ler = () => { try { return localStorage.getItem(CHAVE); } catch { return null; } };
+const gravar = (v) => { try { v ? localStorage.setItem(CHAVE, v) : localStorage.removeItem(CHAVE); } catch {} };
+
+let meuId = new URLSearchParams(location.search).get("t") || ler();
+let timer, relogio;
+
+function mostrar(tela) {
+  for (const t of ["cadastro", "fila", "vez", "fim"]) $("tela-" + t).classList.toggle("oculto", t !== tela);
+}
+
+// Máscara simples de telefone BR
+$("telefone").addEventListener("input", (e) => {
+  let d = e.target.value.replace(/\D/g, "").slice(0, 11);
+  if (d.length > 6) e.target.value = `(${d.slice(0,2)}) ${d.slice(2, d.length - 4)}-${d.slice(-4)}`;
+  else if (d.length > 2) e.target.value = `(${d.slice(0,2)}) ${d.slice(2)}`;
+  else e.target.value = d;
+});
+
+$("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  $("erro").textContent = "";
+  const dados = Object.fromEntries(new FormData(e.target));
+  if (!dados.nome.trim()) return ($("erro").textContent = "Informe seu nome.");
+  if (dados.telefone.replace(/\D/g, "").length < 10) return ($("erro").textContent = "Informe o WhatsApp com DDD.");
+  if (!$("aceite").checked) return ($("erro").textContent = "Precisamos do seu aceite para te chamar no WhatsApp.");
+  $("enviar").disabled = true; $("enviar").textContent = "Entrando…";
+  try {
+    const r = await api("entrar", dados);
+    meuId = r.id; gravar(meuId);
+    history.replaceState(null, "", "?t=" + meuId);
+    await atualizar();
+  } catch (err) {
+    $("erro").textContent = err.message;
+  } finally {
+    $("enviar").disabled = false; $("enviar").textContent = "Entrar na fila";
+  }
+});
+
+$("nova").addEventListener("click", () => {
+  gravar(null); meuId = null; clearTimeout(timer);
+  history.replaceState(null, "", location.pathname);
+  $("form").reset(); $("aceite").checked = true;
+  mostrar("cadastro");
+});
+
+function contagem(chamadoEm, tolerancia) {
+  clearInterval(relogio);
+  const fim = Date.parse(chamadoEm) + tolerancia * 60000;
+  const tick = () => {
+    const s = Math.max(0, Math.round((fim - Date.now()) / 1000));
+    $("relogio").textContent = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    $("relogio-txt").textContent = s ? "tempo para chegar ao stand" : "corre, ainda dá tempo! 🏃";
+  };
+  tick(); relogio = setInterval(tick, 1000);
+}
+
+let ultimoStatus;
+async function atualizar() {
+  clearTimeout(timer);
+  if (!meuId) return mostrar("cadastro");
+  try {
+    const s = await api("status", { id: meuId });
+    if (s.status === "aguardando") {
+      $("ola").textContent = `Oi, ${s.nome}!`;
+      $("posicao").textContent = s.posicao ? s.posicao + "º" : "–";
+      $("espera").textContent = s.espera_min ? `~${s.espera_min} min` : "–";
+      mostrar("fila");
+    } else if (s.status === "chamado") {
+      if (ultimoStatus !== "chamado" && navigator.vibrate) navigator.vibrate([300, 150, 300]);
+      contagem(s.chamado_em, s.tolerancia_min);
+      mostrar("vez");
+    } else {
+      clearInterval(relogio);
+      const atendido = s.status === "atendido" || s.status === "atendendo";
+      $("fim-etq").textContent = atendido ? "Obrigado" : "Fila encerrada";
+      $("fim-titulo").textContent = atendido ? `Valeu, ${s.nome}!` : "Sua vez foi liberada";
+      $("fim-txt").textContent = atendido
+        ? "Foi um prazer te receber no stand. Seguimos a conversa pelo WhatsApp."
+        : "Não te encontramos quando chamamos. Se ainda quiser, entre na fila de novo.";
+      mostrar("fim");
+    }
+    ultimoStatus = s.status;
+  } catch (err) {
+    if (err.status === 404) { gravar(null); meuId = null; return mostrar("cadastro"); }
+  }
+  timer = setTimeout(atualizar, 8000);
+}
+
+document.addEventListener("visibilitychange", () => { if (!document.hidden && meuId) atualizar(); });
+atualizar();
+</script>
+</body>
+</html>
