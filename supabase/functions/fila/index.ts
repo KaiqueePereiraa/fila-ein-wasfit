@@ -3,10 +3,18 @@
 // chegou, finalizar, pular, rechamar, remover, voltar, exportar.
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const sb = createClient(
-  Deno.env.get("SUPABASE_URL")!,
-  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-);
+// Projetos novos expõem as chaves secretas em SUPABASE_SECRET_KEYS; os antigos, em SUPABASE_SERVICE_ROLE_KEY.
+function chaveServico(): string {
+  const legado = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (legado) return legado;
+  try {
+    const chaves = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    return chaves.default ?? Object.values(chaves)[0] ?? "";
+  } catch {
+    return "";
+  }
+}
+const sb = createClient(Deno.env.get("SUPABASE_URL")!, chaveServico());
 const WEBHOOK = Deno.env.get("WASFIT_WEBHOOK_URL") ?? "";
 const PIN = Deno.env.get("PAINEL_PIN") ?? "";
 const SITE = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
