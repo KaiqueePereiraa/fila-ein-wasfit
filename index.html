@@ -31,6 +31,9 @@
   .linhas b { display: block; font-size: 22px; }
   .linhas span { font-size: 12px; color: var(--suave); }
   .dica { font-size: 14px; color: var(--suave); }
+  .dica.alerta { color: var(--lima); font-weight: 600; font-size: 15px; }
+  .numero.pequeno { font-size: 64px; padding: 20px 0 8px; }
+  .perto { border-color: var(--lima); box-shadow: 0 0 40px color-mix(in srgb, #9EEA4E 18%, transparent); }
 
   .vez { border-color: var(--verde); box-shadow: 0 0 0 4px color-mix(in srgb, var(--verde) 20%, transparent), 0 0 60px color-mix(in srgb, var(--verde) 25%, transparent); animation: pulsa 1.6s ease-in-out infinite; }
   .vez h2 { font-family: "Poppins", sans-serif; font-weight: 800; font-size: 40px; line-height: 1.05; margin: 6px 0 10px; }
@@ -87,13 +90,13 @@
     <div class="cartao estado">
       <span class="etiqueta">Você está na fila</span>
       <p class="rotulo" style="margin-top:18px" id="ola"></p>
-      <div class="numero" id="posicao">–</div>
-      <div class="rotulo">sua posição</div>
+      <div class="numero" id="na-frente">–</div>
+      <div class="rotulo" id="na-frente-txt">pessoas na sua frente</div>
       <div class="linhas">
+        <div><b id="posicao">–</b><span>sua posição na fila</span></div>
         <div><b id="espera">–</b><span>espera estimada</span></div>
-        <div><b>WhatsApp</b><span>é por lá que te chamamos</span></div>
       </div>
-      <p class="dica">Pode circular pela feira. Esta página atualiza sozinha.</p>
+      <p class="dica" id="dica">Pode circular pela feira. Quando faltar pouco, te mandamos um aviso no WhatsApp pra você ir se aproximando.</p>
     </div>
   </section>
 
@@ -190,8 +193,18 @@ async function atualizar() {
     const s = await api("status", { id: meuId });
     if (s.status === "aguardando") {
       $("ola").textContent = `Oi, ${s.nome}!`;
+      const n = s.na_frente ?? 0;
+      const proximo = n === 0;
+      $("na-frente").textContent = proximo ? "Já já!" : n;
+      $("na-frente").classList.toggle("pequeno", proximo);
+      $("na-frente-txt").textContent = proximo ? "você é o(a) próximo(a)" : n === 1 ? "pessoa na sua frente" : "pessoas na sua frente";
       $("posicao").textContent = s.posicao ? s.posicao + "º" : "–";
       $("espera").textContent = s.espera_min ? `~${s.espera_min} min` : "–";
+      $("dica").textContent = n <= 1
+        ? "Falta pouco! Já pode ir se aproximando do stand da WasFit."
+        : "Pode circular pela feira. Quando faltar pouco, te mandamos um aviso no WhatsApp pra você ir se aproximando.";
+      $("dica").classList.toggle("alerta", n <= 1);
+      $("tela-fila").querySelector(".cartao").classList.toggle("perto", n <= 1);
       mostrar("fila");
     } else if (s.status === "chamado") {
       if (ultimoStatus !== "chamado" && navigator.vibrate) navigator.vibrate([300, 150, 300]);

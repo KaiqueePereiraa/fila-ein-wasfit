@@ -14,6 +14,7 @@ const SITE = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
 const ATENDENTES = 2;
 const TOLERANCIA_MIN = 10; // tempo para a pessoa aparecer depois de chamada
 const DURACAO_PADRAO_MIN = 10; // usado até termos atendimentos finalizados
+const AVISAR_ATE_POSICAO = 2; // "prepare-se" quando restar 1 pessoa na frente
 const ATIVOS = ["aguardando", "chamado", "atendendo"];
 
 const cors = {
@@ -38,6 +39,7 @@ type Pessoa = {
   instagram: string | null;
   status: string;
   pulos: number;
+  avisado_proximo: boolean;
   entrou_em: string;
   fila_desde: string;
   chamado_em: string | null;
@@ -129,7 +131,7 @@ async function posicaoDe(id: string) {
   const espera = posicao === null
     ? null
     : Math.max(2, Math.round(Math.ceil(posicao / ATENDENTES) * media));
-  return { posicao, espera_min: espera, na_fila: fila.length };
+  return { posicao, na_frente: posicao === null ? null : posicao - 1, espera_min: espera, na_fila: fila.length };
 }
 
 async function buscar(id: string): Promise<Pessoa | null> {
@@ -147,12 +149,18 @@ async function atualizar(id: string, campos: Partial<Pessoa>, deStatus?: string[
 
 const linkAcompanhar = (id: string) => (SITE ? `\n\nAcompanhe sua posição: ${SITE}/?t=${id}` : "");
 
+const naFrente = (n: number) =>
+  n === 0 ? "você é o(a) *próximo(a)*" : n === 1 ? "*1 pessoa* na sua frente" : `*${n} pessoas* na sua frente`;
+
 const msg = {
   entrou: (p: Pessoa, pos: number, min: number) =>
     `Oi, ${primeiroNome(p.nome)}! 👋 Você entrou na fila do stand da *WasFit* na EIN 2026.\n\n` +
-    `Sua posição: *${pos}º* · espera estimada: *~${min} min*.\n\n` +
+    `Agora: ${naFrente(pos - 1)} · espera estimada: *~${min} min*.\n\n` +
     `Pode circular pela feira tranquilo(a), a gente te chama aqui quando chegar a sua vez.` +
     linkAcompanhar(p.id),
+  preparar: (p: Pessoa, pos: number) =>
+    `${primeiroNome(p.nome)}, falta pouco! ⏱️ Agora ${naFrente(pos - 1)}.\n\n` +
+    `Já pode ir se aproximando do stand da *WasFit*, vamos te chamar em instantes.`,
   chamado: (p: Pessoa) =>
     `${primeiroNome(p.nome)}, chegou a sua vez! 🏊\n\n` +
     `Venha agora para o stand da *WasFit*. Vamos te esperar por *${TOLERANCIA_MIN} minutos*.`,
@@ -160,11 +168,21 @@ const msg = {
     `${primeiroNome(p.nome)}, ainda estamos te esperando no stand da *WasFit*! ⏳ Venha assim que puder.`,
   pulado: (p: Pessoa, pos: number) =>
     `${primeiroNome(p.nome)}, chamamos você mas não te encontramos no stand 😕\n\n` +
-    `Sem problema: você voltou para a fila na posição *${pos}º*. Te avisamos de novo por aqui.`,
+    `Sem problema: você voltou para a fila, com ${naFrente(pos - 1)}. Te avisamos de novo por aqui.`,
   desistiu: (p: Pessoa) =>
     `${primeiroNome(p.nome)}, como não conseguimos te encontrar, liberamos a sua vez na fila.\n\n` +
     `Se ainda quiser conhecer a WasFit, é só passar no stand ou responder esta mensagem 💚`,
 };
+
+// Manda o "prepare-se" para quem chegou perto do início da fila e ainda não recebeu.
+async function avisarProximos() {
+  const fila = (await aguardando()).slice(0, AVISAR_ATE_POSICAO);
+  for (const [i, cand] of fila.entries()) {
+    if (cand.avisado_proximo) continue;
+    const p = await atualizar(cand.id, { avisado_proximo: true }, ["aguardando"]);
+    if (p) await enviarWhatsApp(p, msg.preparar(p, i + 1));
+  }
+}
 
 // ---------- ações públicas ----------
 
@@ -199,6 +217,9 @@ async function entrar(b: Record<string, unknown>) {
 
   const p = data as Pessoa;
   const { posicao, espera_min } = await posicaoDe(p.id);
+  if (posicao !== null && posicao <= AVISAR_ATE_POSICAO) {
+    await atualizar(p.id, { avisado_proximo: true });
+  }
   await enviarWhatsApp(p, msg.entrou(p, posicao ?? 1, espera_min ?? DURACAO_PADRAO_MIN));
   return json({ id: p.id });
 }
@@ -211,6 +232,7 @@ async function status(b: Record<string, unknown>) {
     nome: primeiroNome(p.nome),
     status: p.status,
     posicao: pos?.posicao ?? null,
+    na_frente: pos?.na_frente ?? null,
     espera_min: pos?.espera_min ?? null,
     chamado_em: p.chamado_em,
     tolerancia_min: TOLERANCIA_MIN,
@@ -270,6 +292,7 @@ async function chamar(b: Record<string, unknown>) {
   }
   if (!p) return json({ erro: "Ninguém aguardando na fila." }, 409);
   const enviado = await enviarWhatsApp(p, msg.chamado(p));
+  await avisarProximos();
   return json({ ok: true, pessoa: p, enviado });
 }
 
@@ -311,11 +334,12 @@ async function pular(b: Record<string, unknown>) {
   }
   const p = await atualizar(
     atual.id,
-    { status: "aguardando", pulos: atual.pulos + 1, fila_desde: new Date().toISOString(), chamado_em: null },
+    { status: "aguardando", pulos: atual.pulos + 1, fila_desde: new Date().toISOString(), chamado_em: null, avisado_proximo: false },
     ["chamado"],
   );
   if (!p) return json({ erro: "Não foi possível pular." }, 409);
   const { posicao } = await posicaoDe(p.id);
+  if (posicao !== null && posicao <= AVISAR_ATE_POSICAO) await atualizar(p.id, { avisado_proximo: true });
   await enviarWhatsApp(p, msg.pulado(p, posicao ?? 1));
   return json({ ok: true, resultado: "voltou_para_fila", posicao });
 }
@@ -323,6 +347,7 @@ async function pular(b: Record<string, unknown>) {
 async function remover(b: Record<string, unknown>) {
   const p = await atualizar(String(b.id), { status: "desistiu", finalizado_em: new Date().toISOString() }, ATIVOS);
   if (!p) return json({ erro: "Não foi possível remover." }, 409);
+  await avisarProximos();
   return json({ ok: true });
 }
 
@@ -330,7 +355,7 @@ async function voltar(b: Record<string, unknown>) {
   // Desfaz um "desistiu"/"pular" errado: volta pro fim da fila, sem mensagem.
   const p = await atualizar(
     String(b.id),
-    { status: "aguardando", fila_desde: new Date().toISOString(), chamado_em: null, finalizado_em: null },
+    { status: "aguardando", fila_desde: new Date().toISOString(), chamado_em: null, finalizado_em: null, avisado_proximo: false },
     ["desistiu", "chamado"],
   );
   if (!p) return json({ erro: "Não foi possível voltar para a fila." }, 409);

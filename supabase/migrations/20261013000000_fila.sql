@@ -10,6 +10,7 @@ create table if not exists public.fila (
   status        text not null default 'aguardando'
                 check (status in ('aguardando','chamado','atendendo','atendido','desistiu')),
   pulos         int  not null default 0,
+  avisado_proximo boolean not null default false, -- já recebeu o "prepare-se"
   entrou_em     timestamptz not null default now(),  -- primeira entrada (tempo total de espera)
   fila_desde    timestamptz not null default now(),  -- ordem na fila (muda quando é pulado)
   chamado_em    timestamptz,
