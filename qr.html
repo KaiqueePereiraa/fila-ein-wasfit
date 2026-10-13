@@ -5,24 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR da Fila · WasFit</title>
 <meta name="robots" content="noindex">
-<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <style>
   @page { size: A4; margin: 0; }
   body { display: grid; place-items: center; padding: 24px 16px; }
-  .cartaz { width: min(100%, 560px); text-align: center; padding: 40px 28px; border-radius: 28px; background: linear-gradient(180deg, #0a4157, #04202d); border: 1px solid var(--borda); }
+  .cartaz { width: min(100%, 560px); text-align: center; padding: 40px 28px; border-radius: 28px; background: radial-gradient(500px 300px at 50% 0%, color-mix(in srgb, #16EA9E 18%, transparent), transparent 70%), linear-gradient(180deg, #14223F, #01040a); border: 1px solid var(--borda); }
   .cartaz .marca { justify-content: center; font-size: 30px; }
-  .cartaz .marca svg { width: 40px; height: 40px; }
   h1 { font-size: clamp(36px, 9vw, 56px); margin: 22px 0 8px; }
   p { color: var(--suave); font-size: 18px; margin: 0 0 26px; }
   #qr { background: #fff; padding: 18px; border-radius: 20px; display: inline-block; }
   #qr img, #qr canvas { display: block; width: min(320px, 70vw) !important; height: auto !important; }
   .passos { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin-top: 26px; font-size: 14px; color: var(--texto); }
-  .passos span b { color: var(--verde); font-family: "JetBrains Mono", monospace; margin-right: 6px; }
+  .passos span b { color: var(--lima); font-family: "JetBrains Mono", monospace; margin-right: 6px; }
   .url { margin-top: 18px; font-family: "JetBrains Mono", monospace; font-size: 12px; color: var(--suave); word-break: break-all; }
   .imprimir { margin-top: 20px; }
   @media print {
-    body { background: #04202d; -webkit-print-color-adjust: exact; print-color-adjust: exact; min-height: 100vh; }
+    body { background: #01040a; -webkit-print-color-adjust: exact; print-color-adjust: exact; min-height: 100vh; }
     .imprimir { display: none; }
     .cartaz { border: 0; }
   }
@@ -31,11 +30,9 @@
 <body>
   <div>
     <div class="cartaz">
-      <div class="marca">
-        <svg viewBox="0 0 32 32" fill="none" stroke="#3cf0a5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l6 15 7-13 7 13 6-15"/></svg>
-        WasFit
-      </div>
+      <img src="img/logo-nome.png" alt="WasFit" style="height:84px">
       <h1>Entre na <em>fila</em></h1>
+      <img src="img/wavi.png" alt="" style="width:150px;display:block;margin:-4px auto 6px;filter:drop-shadow(0 0 20px rgba(22,234,158,.4))">
       <p>Escaneie, deixe seus dados e circule pela feira.<br>Te chamamos no WhatsApp quando for a sua vez.</p>
       <div id="qr"></div>
       <div class="passos">
@@ -51,7 +48,7 @@
 <script>
   const alvo = new URL("./", location.href).href;
   document.getElementById("url").textContent = alvo.replace(/^https?:\/\//, "");
-  new QRCode(document.getElementById("qr"), { text: alvo, width: 640, height: 640, colorDark: "#04202d", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  new QRCode(document.getElementById("qr"), { text: alvo, width: 640, height: 640, colorDark: "#01040a", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
 </script>
 </body>
 </html>

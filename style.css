@@ -1,12 +1,16 @@
 :root {
-  --fundo: #04202d;
-  --fundo-2: #072f40;
-  --cartao: #0b3a4f;
-  --borda: #15566f;
-  --texto: #eafaf5;
-  --suave: #9cc4cf;
-  --verde: #3cf0a5;
-  --verde-escuro: #052b22;
+  /* Manual WasFit: #14223F (navy) · #16EA9E (verde) · #9EEA4E (lima) */
+  --fundo: #01040a;
+  --fundo-2: #050d1a;
+  --navy: #14223F;
+  --cartao: #0a1426;
+  --borda: #1d3150;
+  --texto: #f2f7f5;
+  --suave: #93a6bd;
+  --verde: #16EA9E;
+  --lima: #9EEA4E;
+  --gradiente: linear-gradient(90deg, #16EA9E, #9EEA4E);
+  --verde-escuro: #01140d;
   --amarelo: #ffd166;
   --vermelho: #ff6b6b;
   --azul: #6cc6ff;
@@ -21,11 +25,12 @@ html, body { margin: 0; }
 body {
   min-height: 100dvh;
   background:
-    radial-gradient(1200px 500px at 50% -200px, #0c5670 0%, transparent 70%),
-    linear-gradient(180deg, var(--fundo-2), var(--fundo));
+    radial-gradient(700px 420px at 110% 0%, color-mix(in srgb, #16EA9E 16%, transparent), transparent 70%),
+    radial-gradient(600px 400px at -20% 100%, color-mix(in srgb, #14223F 70%, transparent), transparent 70%),
+    var(--fundo);
   background-attachment: fixed;
   color: var(--texto);
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
   font-size: 16px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
@@ -49,21 +54,22 @@ body {
   background: var(--verde); box-shadow: 0 0 10px var(--verde);
 }
 
-.marca {
-  display: flex; align-items: center; gap: 10px;
-  font-weight: 800; font-size: 22px; letter-spacing: -.02em;
-}
-.marca svg { width: 30px; height: 30px; }
+.marca { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+.marca img { height: 34px; width: auto; display: block; filter: drop-shadow(0 0 12px color-mix(in srgb, #16EA9E 45%, transparent)); }
 
 h1 {
-  font-family: "Archivo Black", "Inter", sans-serif;
-  font-weight: 400;
-  text-transform: uppercase;
-  line-height: 1.02;
-  letter-spacing: -.01em;
+  font-family: "Poppins", sans-serif;
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -.02em;
   margin: 0;
 }
-h1 em { font-style: normal; color: var(--verde); }
+h1 em, .grad {
+  font-style: normal;
+  background: var(--gradiente);
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+}
 
 .cartao {
   background: color-mix(in srgb, var(--cartao) 85%, transparent);
@@ -87,7 +93,7 @@ input, select {
   transition: border-color .15s;
 }
 input:focus, select:focus { border-color: var(--verde); }
-input::placeholder { color: #5f8c99; }
+input::placeholder { color: #55687f; }
 
 .campo { margin-bottom: 16px; }
 
@@ -97,7 +103,7 @@ button, .botao {
   padding: 14px 18px;
   cursor: pointer;
   color: var(--verde-escuro);
-  background: var(--verde);
+  background: var(--gradiente);
   transition: transform .08s, filter .15s, opacity .15s;
   -webkit-tap-highlight-color: transparent;
 }
