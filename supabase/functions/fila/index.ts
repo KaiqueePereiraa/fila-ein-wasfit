@@ -12,7 +12,7 @@ const PIN = Deno.env.get("PAINEL_PIN") ?? "";
 const SITE = (Deno.env.get("SITE_URL") ?? "").replace(/\/$/, "");
 
 const ATENDENTES = 2;
-const TOLERANCIA_MIN = 10; // tempo para a pessoa aparecer depois de chamada
+const TOLERANCIA_MIN = 5; // tempo para a pessoa aparecer depois de chamada
 const DURACAO_PADRAO_MIN = 10; // usado até termos atendimentos finalizados
 const AVISAR_ATE_POSICAO = 2; // "prepare-se" quando restar 1 pessoa na frente
 const ATIVOS = ["aguardando", "chamado", "atendendo"];
