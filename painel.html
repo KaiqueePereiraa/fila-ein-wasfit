@@ -58,17 +58,30 @@
   th { color: var(--suave); font-weight: 600; }
   .tabela { overflow-x: auto; }
 
-  #login { max-width: 360px; margin: 18vh auto 0; }
+  #login { max-width: 392px; margin: 12vh auto 0; padding: 0 16px; }
   #login h1 { font-size: 30px; margin: 18px 0 16px; }
   #login button { width: 100%; }
   .conexao { font-size: 12px; color: var(--suave); }
   .conexao.ruim { color: var(--vermelho); }
   #aviso { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--texto); color: var(--fundo); padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 14px; max-width: calc(100% - 32px); box-shadow: 0 10px 30px #0008; }
 
+  .stat b { white-space: nowrap; }
   @media (max-width: 860px) {
+    main { padding-bottom: 110px; }
     .colunas { grid-template-columns: 1fr; }
-    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .stats .stat:nth-child(n+4) { display: none; }
+    .stat { padding: 10px 12px; }
+    .stat b { font-size: 22px; }
+    .topo .acoes button { padding: 8px 12px; font-size: 13px; }
+    /* ação principal sempre ao alcance do polegar */
+    #chamar-proximo {
+      position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom));
+      width: auto; z-index: 20; margin: 0; font-size: 19px; padding: 18px;
+      box-shadow: 0 10px 30px #000a, 0 0 40px color-mix(in srgb, #16EA9E 30%, transparent);
+    }
+    #chamar-proximo:disabled { opacity: 1; filter: grayscale(.7) brightness(.7); }
+    .fila-item .mini button { padding: 10px 12px; }
   }
 </style>
 </head>
@@ -103,9 +116,9 @@
 
   <div class="stats">
     <div class="stat"><b id="s-aguardando">–</b><span>na fila</span></div>
-    <div class="stat"><b id="s-espera">–</b><span>espera média até ser chamado</span></div>
+    <div class="stat"><b id="s-espera">–</b><span>espera média</span></div>
     <div class="stat"><b id="s-atendidos">–</b><span>atendidos hoje</span></div>
-    <div class="stat"><b id="s-duracao">–</b><span>duração média do atendimento</span></div>
+    <div class="stat"><b id="s-duracao">–</b><span>duração do atendimento</span></div>
     <div class="stat"><b id="s-desist">–</b><span>desistências hoje</span></div>
   </div>
 

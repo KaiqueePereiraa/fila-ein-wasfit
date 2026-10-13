@@ -11,7 +11,12 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const agora = () => Date.now() + offset;
 const mmss = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; };
 const min = (a, b) => (a && b ? Math.round((Date.parse(b) - Date.parse(a)) / 60000) + " min" : "–");
-const telFmt = (t) => { const d = t.replace(/^55/, ""); return d.length === 11 ? `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}` : t; };
+const telFmt = (t) => {
+  const d = t.replace(/^55/, "");
+  if (d.length === 11) return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  if (d.length === 10) return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+  return t;
+};
 
 function aviso(txt) {
   $("aviso").textContent = txt; $("aviso").classList.remove("oculto");
@@ -62,7 +67,7 @@ function render() {
     <div class="fila-item">
       <div class="pos">${i + 1}</div>
       <div><div class="nome">${esc(p.nome)}${p.pulos ? '<span class="tag">pulado</span>' : ""}</div>
-        <div class="det">${detalhes(p)} · na fila há <span data-desde="${p.entrou_em}" data-fmt="min">${Math.floor((agora() - Date.parse(p.entrou_em)) / 60000)} min</span></div></div>
+        <div class="det">${[p.cargo, p.escola].filter(Boolean).map(esc).join(" · ")}${p.cargo || p.escola ? " · " : ""}há <span data-desde="${p.entrou_em}" data-fmt="min">${Math.floor((agora() - Date.parse(p.entrou_em)) / 60000)} min</span></div></div>
       <div class="mini">
         <button class="secundario" data-acao="chamar" data-id="${p.id}" title="Chamar esta pessoa agora">Chamar</button>
         <button class="perigo" data-acao="remover" data-id="${p.id}" title="Tirar da fila">✕</button>
@@ -181,7 +186,17 @@ $("form-login").addEventListener("submit", async (e) => {
   } catch (err) { $("erro-login").textContent = err.status === 401 ? "PIN incorreto." : err.message; }
 });
 
+// Mantém a tela do celular acesa enquanto o painel está aberto
+let travaTela = null;
+async function manterTelaAcesa() {
+  try { if ("wakeLock" in navigator && !document.hidden) travaTela = await navigator.wakeLock.request("screen"); } catch {}
+}
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && PIN) { manterTelaAcesa(); carregar(); }
+});
+
 function iniciar() {
+  manterTelaAcesa();
   $("login").classList.add("oculto"); $("app").classList.remove("oculto");
   $("eu").textContent = ATENDENTE ? "· " + ATENDENTE : "";
   carregar();

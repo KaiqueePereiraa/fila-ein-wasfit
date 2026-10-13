@@ -65,8 +65,8 @@
     <div class="hero"><h1>Entre na <em>fila</em> do stand</h1><img class="wavi-mini" src="img/wavi.png" alt=""></div>
     <p class="intro">Deixe seus dados e pode circular pela feira. Avisamos no seu WhatsApp quando for a sua vez.</p>
     <form id="form" class="cartao" novalidate>
-      <div class="campo"><label for="nome">Seu nome</label><input id="nome" name="nome" autocomplete="name" required placeholder="Ex.: Mariana Lopes"></div>
-      <div class="campo"><label for="telefone">WhatsApp <small>com DDD</small></label><input id="telefone" name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" required placeholder="(27) 99999-9999"></div>
+      <div class="campo"><label for="nome">Seu nome</label><input id="nome" enterkeyhint="next" name="nome" autocomplete="name" required placeholder="Ex.: Mariana Lopes"></div>
+      <div class="campo"><label for="telefone">WhatsApp <small>com DDD</small></label><input id="telefone" enterkeyhint="next" name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" required placeholder="(27) 99999-9999"></div>
       <div class="campo"><label for="cargo">Cargo</label>
         <select id="cargo" name="cargo">
           <option value="">Selecione…</option>
@@ -79,9 +79,9 @@
           <option>Outro</option>
         </select>
       </div>
-      <div class="campo"><label for="email">E-mail</label><input id="email" name="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@escola.com.br"></div>
-      <div class="campo"><label for="escola">Nome da escola</label><input id="escola" name="escola" autocomplete="organization" placeholder="Ex.: Acqua Vida Natação"></div>
-      <div class="campo"><label for="instagram">Instagram da escola</label><input id="instagram" name="instagram" autocapitalize="off" autocorrect="off" placeholder="@suaescola"></div>
+      <div class="campo"><label for="email">E-mail</label><input id="email" enterkeyhint="next" name="email" type="email" inputmode="email" autocomplete="email" placeholder="voce@escola.com.br"></div>
+      <div class="campo"><label for="escola">Nome da escola</label><input id="escola" enterkeyhint="next" name="escola" autocomplete="organization" placeholder="Ex.: Acqua Vida Natação"></div>
+      <div class="campo"><label for="instagram">Instagram da escola</label><input id="instagram" enterkeyhint="done" name="instagram" autocapitalize="off" autocorrect="off" placeholder="@suaescola"></div>
       <!-- armadilha anti-robô: invisível para pessoas -->
       <div class="isca" aria-hidden="true"><label for="cx_ref">Não preencha</label><input id="cx_ref" name="cx_ref" tabindex="-1" autocomplete="off"></div>
       <label class="consentimento"><input type="checkbox" id="aceite" checked> Aceito receber mensagens da WasFit no WhatsApp sobre a fila e sobre a WasFit.</label>
